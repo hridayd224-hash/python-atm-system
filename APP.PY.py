@@ -1,5 +1,5 @@
 import json
-from datetime import date
+from datetime import date, datetime
 
 
 class BankAccount:
@@ -13,16 +13,19 @@ class BankAccount:
         self.last_date = str(date.today())
         self.history = []
 
-    # Reset daily limit automatically
+    # Reset daily withdrawal limit automatically
     def reset_daily_limit(self):
         today = str(date.today())
 
         if today != self.last_date:
             self.daily_withdrawn = 0
             self.last_date = today
-            self.history.append("Daily withdrawal limit reset")
+            self.history.append(
+                f"[{datetime.now().strftime('%d-%m-%Y %I:%M:%S %p')}] "
+                "Daily withdrawal limit reset"
+            )
 
-    
+    # Deposit money
     def deposit(self, amount):
 
         if amount <= 0:
@@ -30,48 +33,61 @@ class BankAccount:
             return
 
         self.balance += amount
-        self.history.append(f"Deposited ₹{amount}")
+
+        timestamp = datetime.now().strftime("%d-%m-%Y %I:%M:%S %p")
+
+        self.history.append(
+            f"[{timestamp}] Deposited ₹{amount}"
+        )
 
         print(f"\n₹{amount} deposited successfully.")
         self.check_balance()
 
-    
+    # Withdraw money
     def withdraw(self, amount):
 
         self.reset_daily_limit()
 
         if amount <= 0:
             print("Amount must be positive.\n")
+            return
 
         elif self.daily_withdrawn + amount > self.daily_limit:
 
             remaining = self.daily_limit - self.daily_withdrawn
 
-            print(f"Daily limit exceeded.")
+            print("Daily limit exceeded.")
             print(f"You can withdraw only ₹{remaining} more today.\n")
+            return
 
         elif amount > self.balance:
             print("Insufficient Balance.\n")
+            return
 
         else:
 
             self.balance -= amount
             self.daily_withdrawn += amount
 
-            self.history.append(f"Withdrawn ₹{amount}")
+            timestamp = datetime.now().strftime("%d-%m-%Y %I:%M:%S %p")
+
+            self.history.append(
+                f"[{timestamp}] Withdrawn ₹{amount}"
+            )
 
             print(f"\n₹{amount} withdrawn successfully.")
             self.check_balance()
 
             print(
-                f"Today's withdrawal: ₹{self.daily_withdrawn}/{self.daily_limit}\n"
+                f"Today's withdrawal: "
+                f"₹{self.daily_withdrawn}/{self.daily_limit}\n"
             )
 
-    
+    # Check balance
     def check_balance(self):
         print(f"Current Balance: ₹{self.balance}\n")
 
-   
+    # Show last 5 transactions
     def show_history(self):
 
         print("\n------ Last 5 Transactions ------")
@@ -87,8 +103,7 @@ class BankAccount:
         print()
 
 
-
-
+# Save all accounts
 def save_accounts(accounts):
 
     data = {}
@@ -108,8 +123,7 @@ def save_accounts(accounts):
         json.dump(data, file, indent=4)
 
 
-
-
+# Load all accounts
 def load_accounts():
 
     accounts = {}
@@ -140,10 +154,11 @@ def load_accounts():
     return accounts
 
 
-
-
+# Load accounts when program starts
 accounts = load_accounts()
 
+
+# Main program
 while True:
 
     print("\n========== BANK SYSTEM ==========")
@@ -153,8 +168,7 @@ while True:
 
     option = input("Enter choice: ")
 
-   
-
+    # Create Account
     if option == "1":
 
         name = input("Enter Name: ")
@@ -174,14 +188,17 @@ while True:
 
             print("PIN must contain exactly 4 digits.")
 
-        accounts[name] = BankAccount(name, balance, pin)
+        accounts[name] = BankAccount(
+            name,
+            balance,
+            pin
+        )
 
         save_accounts(accounts)
 
         print("Account created successfully.\n")
 
-    
-
+    # Login
     elif option == "2":
 
         name = input("Enter Name: ")
@@ -199,22 +216,26 @@ while True:
             entered_pin = input("Enter PIN: ")
 
             if entered_pin == account.pin:
+
                 print(f"\nWelcome {account.name}!\n")
                 break
 
             attempts -= 1
 
             if attempts > 0:
-                print(f"Wrong PIN! Attempts left: {attempts}")
+                print(
+                    f"Wrong PIN! Attempts left: {attempts}"
+                )
 
             else:
-                print("Account locked for this session.\n")
+                print(
+                    "Account locked for this session.\n"
+                )
 
         if attempts == 0:
             continue
 
-    
-
+        # ATM Menu
         while True:
 
             print("========== ATM MENU ==========")
@@ -226,38 +247,62 @@ while True:
 
             choice = input("Enter choice: ")
 
+            # Check Balance
             if choice == "1":
+
                 account.check_balance()
 
+            # Deposit
             elif choice == "2":
 
-                amount = float(input("Enter Deposit Amount: "))
+                amount = float(
+                    input("Enter Deposit Amount: ")
+                )
+
                 account.deposit(amount)
+
                 save_accounts(accounts)
 
+            # Withdraw
             elif choice == "3":
 
-                amount = float(input("Enter Withdrawal Amount: "))
+                amount = float(
+                    input("Enter Withdrawal Amount: ")
+                )
+
                 account.withdraw(amount)
+
                 save_accounts(accounts)
 
+            # Transaction History
             elif choice == "4":
+
                 account.show_history()
 
+            # Logout
             elif choice == "5":
+
                 save_accounts(accounts)
-                print("Logged out successfully.\n")
+
+                print(
+                    "Logged out successfully.\n"
+                )
+
                 break
 
             else:
+
                 print("Invalid choice.\n")
 
-   
-
+    # Exit
     elif option == "3":
+
         save_accounts(accounts)
+
         print("Thank you for using our ATM!")
+
         break
 
     else:
+
         print("Invalid choice.\n")
